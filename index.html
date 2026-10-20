@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>PokéAlert</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#e63946" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PokéAlert" />
+  <style>
+    :root {
+      --red: #e63946;
+      --red-dark: #c1121f;
+      --bg: #0f0f1a;
+      --bg2: #1a1a2e;
+      --bg3: #16213e;
+      --card: #1e1e35;
+      --border: #2a2a4a;
+      --text: #f0f0f0;
+      --text2: #9090b0;
+      --green: #2ecc71;
+      --orange: #f39c12;
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      background: var(--bg2);
+      padding: 20px 16px 12px;
+      padding-top: max(20px, env(safe-area-inset-top));
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .logo-icon { font-size: 26px; }
+    .logo span { color: var(--red); }
+
+    .btn-install {
+      background: var(--red);
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: none;
+    }
+    .btn-install.visible { display: block; }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      margin-top: 12px;
+    }
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 10px 4px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text2);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all .2s;
+    }
+    .tab.active {
+      color: var(--red);
+      border-bottom-color: var(--red);
+    }
+
+    /* ── CONTENT ── */
+    .content {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* ── EMAIL SETUP ── */
+    .email-banner {
+      background: linear-gradient(135deg, #1e1e35, #2a1a35);
+      border: 1px solid var(--red);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .email-banner h3 { font-size: 15px; margin-bottom: 4px; }
+    .email-banner p { font-size: 13px; color: var(--text2); margin-bottom: 12px; }
+    .email-row { display: flex; gap: 8px; }
+    .input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .input:focus { border-color: var(--red); }
+    .btn {
+      background: var(--red);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .2s;
+      white-space: nowrap;
+    }
+    .btn:hover { background: var(--red-dark); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text2);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--border); }
+
+    /* ── STATS ── */
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .stat {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 14px 10px;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+    .stat-val { font-size: 26px; font-weight: 800; color: var(--red); }
+    .stat-label { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+    /* ── PRODUITS ── */
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+
+    .products-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .product-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 14px;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      transition: border-color .2s;
+    }
+    .product-card:hover { border-color: var(--red); }
+
+    .product-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .icon-amazon { background: #FF9900; }
+    .icon-fnac { background: #f5a623; }
+    .icon-cultura { background: #0066cc; }
+
+    .product-info { flex: 1; min-width: 0; }
+    .product-name {
+      font-weight: 700;
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+    .product-site { font-size: 12px; color: var(--text2); }
+
+    .product-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+    }
+
+    .badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .badge-in_stock { background: rgba(46,204,113,.15); color: var(--green); }
+    .badge-out_of_stock { background: rgba(230,57,70,.15); color: var(--red); }
+    .badge-unknown { background: rgba(144,144,176,.1); color: var(--text2); }
+
+    .alert-toggle {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--text2);
+      font-size: 11px;
+      padding: 3px 10px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .alert-toggle.on {
+      border-color: var(--green);
+      color: var(--green);
+      background: rgba(46,204,113,.08);
+    }
+
+    .price-tag { font-size: 13px; font-weight: 700; color: var(--text); }
+
+    /* ── EMPTY STATE ── */
+    .empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text2);
+    }
+    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty h3 { font-size: 16px; color: var(--text); margin-bottom: 6px; }
+    .empty p { font-size: 14px; line-height: 1.5; }
+
+    /* ── ADD PRODUCT ── */
+    .add-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 20px;
+      border: 1px solid var(--border);
+    }
+    .add-card h2 { font-size: 18px; margin-bottom: 4px; }
+    .add-card p { font-size: 13px; color: var(--text2); margin-bottom: 20px; }
+
+    .form-group { margin-bottom: 14px; }
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .input-full { width: 100%; }
+
+    .sites-info {
+      display: flex;
+      gap: 8px;
+      margin: 16px 0;
+    }
+    .site-chip {
+      background: var(--bg3);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid var(--border);
+    }
+
+    .result-box {
+      background: var(--bg3);
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 16px;
+      border: 1px solid var(--border);
+      display: none;
+    }
+    .result-box.success { border-color: var(--green); }
+    .result-box.error { border-color: var(--red); }
+    .result-box.visible { display: block; }
+    .result-title { font-weight: 700; margin-bottom: 6px; font-size: 14px; }
+    .result-detail { font-size: 13px; color: var(--text2); }
+
+    .freemium-bar {
+      background: var(--bg3);
+      border-radius: 10px;
+      padding: 12px;
+      margin-top: 16px;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .freemium-count { font-size: 13px; color: var(--text2); }
+    .freemium-count strong { color: var(--text); }
+    .progress-bar {
+      height: 4px;
+      background: var(--border);
+      border-radius: 4px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--red);
+      border-radius: 4px;
+      transition: width .4s;
+    }
+
+    /* ── CALENDAR ── */
+    .release-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 16px;
+      border: 1px solid var(--border);
+      margin-bottom: 10px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .release-date-box {
+      background: var(--red);
+      border-radius: 10px;
+      padding: 8px 10px;
+      text-align: center;
+      min-width: 48px;
+      flex-shrink: 0;
+    }
+    .release-day { font-size: 22px; font-weight: 800; line-height: 1; }
+    .release-month { font-size: 11px; font-weight: 700; text-transform: uppercase; opacity: .85; }
+    .release-info h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .release-code { font-size: 11px; color: var(--text2); margin-bottom: 8px; }
+    .release-products {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .product-chip {
+      background: var(--bg3);
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 11px;
+      color: var(--text2);
+      border: 1px solid var(--border);
+    }
+    .preorder-badge {
+      background: rgba(46,204,113,.15);
+      color: var(--green);
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid rgba(46,204,113,.3);
+    }
+
+    /* ── BOTTOM NAV ── */
+    .bottom-nav {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      display: flex;
+      padding: 8px 0;
+      padding-bottom: max(8px, env(safe-area-inset-bottom));
+      position: sticky;
+      bottom: 0;
+    }
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      padding: 4px 0;
+      color: var(--text2);
+      font-size: 10px;
+      font-weight: 600;
+      transition: color .2s;
+    }
+    .nav-item.active { color: var(--red); }
+    .nav-icon { font-size: 22px; }
+
+    /* ── LOADING ── */
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15,15,26,.7);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .loading-overlay.visible { display: flex; }
+    .loading-box {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 24px 32px;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+    .loading-box p { margin-top: 12px; color: var(--text2); font-size: 14px; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      opacity: 0;
+      transition: all .3s;
+      z-index: 300;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .toast.success { border-color: var(--green); color: var(--green); }
+    .toast.error { border-color: var(--red); color: var(--red); }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div class="logo">
+      <span class="logo-icon">🃏</span>
+      Poké<span>Alert</span>
+    </div>
+    <button class="btn-install" id="btnInstall">📲 Installer</button>
+  </div>
+  <div class="tabs">
+    <div class="tab active" data-tab="dashboard">📦 Mes produits</div>
+    <div class="tab" data-tab="add">➕ Ajouter</div>
+    <div class="tab" data-tab="calendar">📅 Sorties</div>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+  <!-- DASHBOARD -->
+  <div class="screen active" id="screen-dashboard">
+
+    <div class="email-banner" id="emailBanner">
+      <h3>👋 Bienvenue sur PokéAlert !</h3>
+      <p>Entre ton email pour recevoir les alertes de restock.</p>
+      <div class="email-row">
+        <input type="email" class="input" id="emailInput" placeholder="ton@email.com" />
+        <button class="btn" id="btnSaveEmail">OK</button>
+      </div>
+    </div>
+
+    <div class="stats" id="statsBar" style="display:none">
+      <div class="stat">
+        <div class="stat-val" id="statTotal">0</div>
+        <div class="stat-label">Suivis</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" style="color:var(--green)" id="statStock">0</div>
+        <div class="stat-label">En stock</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" style="color:var(--text2)" id="statUnknown">0</div>
+        <div class="stat-label">Inconnu</div>
+      </div>
+    </div>
+
+    <div class="section-title" id="listTitle" style="display:none">Produits surveillés</div>
+
+    <div class="products-list" id="productsList">
+      <div class="empty">
+        <div class="empty-icon">📭</div>
+        <h3>Aucun produit suivi</h3>
+        <p>Ajoute une URL Amazon, Fnac ou Cultura pour commencer.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ADD PRODUCT -->
+  <div class="screen" id="screen-add">
+    <div class="add-card">
+      <h2>🔍 Ajouter un produit</h2>
+      <p>Colle l'URL d'un produit Pokémon TCG pour le surveiller.</p>
+
+      <div class="sites-info">
+        <div class="site-chip">🛒 Amazon FR</div>
+        <div class="site-chip">📚 Fnac</div>
+        <div class="site-chip">🎨 Cultura</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">URL du produit</label>
+        <input type="url" class="input input-full" id="addUrl"
+          placeholder="https://www.amazon.fr/dp/..." />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Ton email</label>
+        <input type="email" class="input input-full" id="addEmail"
+          placeholder="ton@email.com" />
+      </div>
+
+      <button class="btn" id="btnAdd" style="width:100%">
+        Surveiller ce produit
+      </button>
+
+      <div class="result-box" id="addResult">
+        <div class="result-title" id="addResultTitle"></div>
+        <div class="result-detail" id="addResultDetail"></div>
+      </div>
+
+      <div class="freemium-bar" id="freemiumBar" style="display:none">
+        <div>
+          <div class="freemium-count">Plan gratuit · <strong id="usedCount">0</strong>/3 produits</div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width:0%"></div>
+          </div>
+        </div>
+        <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px">
+          Premium
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALENDAR -->
+  <div class="screen" id="screen-calendar">
+    <div class="section-title">Prochaines sorties TCG 🇫🇷</div>
+    <div id="calendarList">
+      <div class="empty">
+        <div class="empty-icon">⏳</div>
+        <p>Chargement...</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <div class="nav-item active" data-nav="dashboard">
+    <div class="nav-icon">📦</div>
+    <div>Produits</div>
+  </div>
+  <div class="nav-item" data-nav="add">
+    <div class="nav-icon">➕</div>
+    <div>Ajouter</div>
+  </div>
+  <div class="nav-item" data-nav="calendar">
+    <div class="nav-icon">📅</div>
+    <div>Calendrier</div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-box">
+    <div class="spinner" style="width:32px;height:32px;border-width:3px"></div>
+    <p id="loadingText">Scraping en cours...</p>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  const API = 'https://web-production-d9b17.up.railway.app';
+
+  // ── STATE ──
+  let userEmail = localStorage.getItem('pokealert_email') || '';
+  let products = [];
+
+  // ── NAVIGATION ──
+  function showTab(name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+    document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === 'screen-' + name));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.nav === name));
+    if (name === 'dashboard' && userEmail) loadProducts();
+    if (name === 'calendar') loadCalendar();
+    if (name === 'add' && userEmail) document.getElementById('addEmail').value = userEmail;
+  }
+
+  document.querySelectorAll('.tab, .nav-item').forEach(el => {
+    el.addEventListener('click', () => showTab(el.dataset.tab || el.dataset.nav));
+  });
+
+  // ── EMAIL SETUP ──
+  function initEmail() {
+    if (userEmail) {
+      document.getElementById('emailBanner').style.display = 'none';
+      document.getElementById('statsBar').style.display = 'grid';
+      document.getElementById('listTitle').style.display = 'block';
+      loadProducts();
+    } else {
+      document.getElementById('emailInput').value = '';
+    }
+  }
+
+  document.getElementById('btnSaveEmail').addEventListener('click', () => {
+    const val = document.getElementById('emailInput').value.trim();
+    if (!val || !val.includes('@')) { showToast('Email invalide', 'error'); return; }
+    userEmail = val;
+    localStorage.setItem('pokealert_email', val);
+    initEmail();
+    showToast('Email enregistré ✅', 'success');
+  });
+
+  // ── LOAD PRODUCTS ──
+  async function loadProducts() {
+    if (!userEmail) return;
+    try {
+      const r = await fetch(`${API}/products/${encodeURIComponent(userEmail)}`);
+      const data = await r.json();
+      products = data.products || [];
+      renderProducts();
+      updateFreemium(products.length, data.plan);
+    } catch(e) {
+      showToast('Erreur de connexion', 'error');
+    }
+  }
+
+  function renderProducts() {
+    const el = document.getElementById('productsList');
+    document.getElementById('statTotal').textContent = products.length;
+    document.getElementById('statStock').textContent = products.filter(p => p.last_status === 'in_stock').length;
+    document.getElementById('statUnknown').textContent = products.filter(p => !p.last_status || p.last_status === 'unknown').length;
+
+    if (!products.length) {
+      el.innerHTML = `<div class="empty">
+        <div class="empty-icon">📭</div>
+        <h3>Aucun produit suivi</h3>
+        <p>Va dans "Ajouter" et colle une URL Amazon, Fnac ou Cultura.</p>
+      </div>`;
+      return;
+    }
+
+    el.innerHTML = products.map(p => {
+      const siteIcons = { 'amazon.fr': '🛒', 'fnac.com': '📚', 'cultura.com': '🎨' };
+      const siteClass = p.site ? p.site.replace('.', '-') : 'amazon-fr';
+      const icon = siteIcons[p.site] || '🛒';
+      const status = p.last_status || 'unknown';
+      const statusLabel = { in_stock: '✅ En stock', out_of_stock: '❌ Rupture', unknown: '❓ Inconnu' }[status] || '❓';
+      const alertOn = p.alert_on !== false;
+
+      return `<div class="product-card">
+        <div class="product-icon icon-${siteClass}">${icon}</div>
+        <div class="product-info">
+          <div class="product-name">${p.name || 'Produit Pokémon TCG'}</div>
+          <div class="product-site">${p.site || 'amazon.fr'}</div>
+          ${p.last_price ? `<div class="price-tag" style="margin-top:4px">${p.last_price}</div>` : ''}
+        </div>
+        <div class="product-right">
+          <span class="badge badge-${status}">${statusLabel}</span>
+          <button class="alert-toggle ${alertOn ? 'on' : ''}" data-id="${p.id}" data-on="${alertOn}">
+            ${alertOn ? '🔔 Alerte on' : '🔕 Alerte off'}
+          </button>
+        </div>
+      </div>`;
+    }).join('');
+
+    // toggle alert buttons
+    document.querySelectorAll('.alert-toggle').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        const wasOn = btn.dataset.on === 'true';
+        btn.disabled = true;
+        try {
+          await fetch(`${API}/alerts/toggle`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ product_id: id, user_email: userEmail, active: !wasOn })
+          });
+          showToast(wasOn ? 'Alerte désactivée' : 'Alerte activée 🔔', 'success');
+          await loadProducts();
+        } catch(e) {
+          showToast('Erreur', 'error');
+        }
+        btn.disabled = false;
+      });
+    });
+  }
+
+  function updateFreemium(count, plan) {
+    const bar = document.getElementById('freemiumBar');
+    if (!bar) return;
+    bar.style.display = 'flex';
+    document.getElementById('usedCount').textContent = count;
+    document.getElementById('progressFill').style.width = Math.min(100, (count / 3) * 100) + '%';
+  }
+
+  // ── ADD PRODUCT ──
+  document.getElementById('btnAdd').addEventListener('click', async () => {
+    const url = document.getElementById('addUrl').value.trim();
+    const email = document.getElementById('addEmail').value.trim();
+    const result = document.getElementById('addResult');
+    const title = document.getElementById('addResultTitle');
+    const detail = document.getElementById('addResultDetail');
+    const btn = document.getElementById('btnAdd');
+
+    if (!url) { showToast('Entre une URL', 'error'); return; }
+    if (!email || !email.includes('@')) { showToast('Email invalide', 'error'); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Scraping en cours...';
+    document.getElementById('loadingText').textContent = 'Scraping du produit...';
+    document.getElementById('loadingOverlay').classList.add('visible');
+    result.classList.remove('visible', 'success', 'error');
+
+    try {
+      const r = await fetch(`${API}/products/add`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, user_email: email })
+      });
+      const data = await r.json();
+      document.getElementById('loadingOverlay').classList.remove('visible');
+
+      if (r.ok && data.success) {
+        userEmail = email;
+        localStorage.setItem('pokealert_email', email);
+        result.classList.add('visible', 'success');
+        title.textContent = '✅ ' + data.product.name;
+        detail.textContent = `${data.product.site} · Statut : ${data.product.status === 'in_stock' ? 'En stock' : data.product.status === 'out_of_stock' ? 'Rupture' : 'Inconnu'} ${data.product.price ? '· ' + data.product.price : ''}`;
+        document.getElementById('addUrl').value = '';
+        showToast('Produit ajouté ! 🎉', 'success');
+        setTimeout(() => showTab('dashboard'), 1500);
+      } else {
+        result.classList.add('visible', 'error');
+        title.textContent = '❌ Erreur';
+        detail.textContent = data.detail || 'Une erreur est survenue.';
+      }
+    } catch(e) {
+      document.getElementById('loadingOverlay').classList.remove('visible');
+      result.classList.add('visible', 'error');
+      title.textContent = '❌ Connexion impossible';
+      detail.textContent = 'Vérifie ta connexion internet.';
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = 'Surveiller ce produit';
+  });
+
+  // ── CALENDAR ──
+  async function loadCalendar() {
+    const el = document.getElementById('calendarList');
+    try {
+      const r = await fetch(`${API}/calendar`);
+      const data = await r.json();
+      const releases = data.releases || [];
+
+      const months = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'];
+
+      el.innerHTML = releases.map(rel => {
+        const d = new Date(rel.release_date);
+        const day = d.getDate();
+        const month = months[d.getMonth()];
+        const year = d.getFullYear();
+        const isPast = d < new Date();
+        const products = (rel.products || []).map(p => `<span class="product-chip">${p}</span>`).join('');
+        const preorder = rel.preorder_available ? `<span class="preorder-badge">Précommande dispo</span>` : '';
+
+        return `<div class="release-card" style="${isPast ? 'opacity:.5' : ''}">
+          <div class="release-date-box">
+            <div class="release-day">${day}</div>
+            <div class="release-month">${month} ${year}</div>
+          </div>
+          <div class="release-info">
+            <h3>${rel.name}</h3>
+            <div class="release-code">${rel.set_code}</div>
+            <div class="release-products">
+              ${products}
+              ${preorder}
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    } catch(e) {
+      el.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><p>Impossible de charger le calendrier.</p></div>`;
+    }
+  }
+
+  // ── TOAST ──
+  function showToast(msg, type = '') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show ' + type;
+    setTimeout(() => t.className = 'toast', 2800);
+  }
+
+  // ── PWA INSTALL ──
+  let deferredPrompt;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    document.getElementById('btnInstall').classList.add('visible');
+  });
+  document.getElementById('btnInstall').addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    document.getElementById('btnInstall').classList.remove('visible');
+  });
+
+  // ── SERVICE WORKER ──
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(console.error);
+  }
+
+  // ── INIT ──
+  initEmail();
+</script>
+</body>
+</html>
